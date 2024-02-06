@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "engines": {
-    "node": "18.19.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "build": "remix vite:build",

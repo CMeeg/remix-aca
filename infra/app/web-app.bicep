@@ -71,7 +71,7 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
     configuration: {
       ingress:  {
         external: true
-        targetPort: 80
+        targetPort: 3000
         transport: 'auto'
       }
       registries: [
@@ -99,7 +99,7 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
             }
             {
               name: 'PORT'
-              value: '80'
+              value: '3000'
             }
           ],
           env,

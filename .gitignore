@@ -4,4 +4,8 @@ node_modules
 /.cache
 /build
 
+.DS_Store
 .env
+*.tsbuildinfo
+
+TODO.md
