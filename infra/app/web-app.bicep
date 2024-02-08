@@ -5,7 +5,6 @@ param tags object = {}
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
-param applicationInsightsName string
 param exists bool
 @secure()
 param appDefinition object
@@ -34,10 +33,6 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-04-01-
   name: containerAppsEnvironmentName
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing = {
-  name: applicationInsightsName
-}
-
 resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: containerRegistry
   name: guid(subscription().id, resourceGroup().id, identity.id, 'acrPullRole')
@@ -60,7 +55,7 @@ module fetchLatestImage '../modules/fetch-container-image.bicep' = {
 resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
   name: name
   location: location
-  tags: union(tags, {'azd-service-name':  'web-app' })
+  tags: tags
   dependsOn: [ acrPullRole ]
   identity: {
     type: 'UserAssigned'
@@ -92,21 +87,20 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
         {
           image: fetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           name: 'main'
-          env: union([
-            {
-              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-              value: applicationInsights.properties.ConnectionString
-            }
-            {
-              name: 'PORT'
-              value: '3000'
-            }
-          ],
-          env,
-          map(secrets, secret => {
-            name: secret.name
-            secretRef: secret.secretRef
-          }))
+          env: union(
+            appDefinition.env ?? [],
+            [
+              {
+                name: 'PORT'
+                value: '3000'
+              }
+            ],
+            env,
+            map(secrets, secret => {
+              name: secret.name
+              secretRef: secret.secretRef
+            })
+          )
           resources: {
             cpu: json('1.0')
             memory: '2.0Gi'
@@ -123,5 +117,6 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
 
 output defaultDomain string = containerAppsEnvironment.properties.defaultDomain
 output name string = app.name
+output fqdn string = app.properties.configuration.ingress.fqdn
 output uri string = 'https://${app.properties.configuration.ingress.fqdn}'
 output id string = app.id

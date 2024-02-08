@@ -2,17 +2,29 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "projectName": {
+      "value": "${PROJECT_NAME=remix-aca}"
+    },
     "environmentName": {
       "value": "${AZURE_ENV_NAME}"
     },
     "location": {
       "value": "${AZURE_LOCATION}"
     },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "webAppServiceName": {
+      "value": "${SERVICE_WEB_APP_NAME=web-app}"
+    },
     "webAppExists": {
       "value": "${SERVICE_WEB_APP_RESOURCE_EXISTS=false}"
     },
     "webAppDefinition": {
       "value": {
+        "config": {
+          "customDomainName": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_NAME}"
+        },
         "settings": [
           {
             "name": "",
@@ -29,9 +41,6 @@
           }
         ]
       }
-    },
-    "principalId": {
-      "value": "${AZURE_PRINCIPAL_ID}"
     }
   }
 }
