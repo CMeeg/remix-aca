@@ -23,6 +23,11 @@
     "webAppDefinition": {
       "value": {
         "config": {
+          "certificateId": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_CERT_ID}",
+          "containerCpuCoreCount": "${SERVICE_WEB_APP_CONTAINER_CPU_CORE_COUNT}",
+          "containerMemory": "${SERVICE_WEB_APP_CONTAINER_MEMORY}",
+          "containerMinReplicas": "${SERVICE_WEB_APP_CONTAINER_MIN_REPLICAS}",
+          "containerMaxReplicas": "${SERVICE_WEB_APP_CONTAINER_MAX_REPLICAS}",
           "customDomainName": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_NAME}"
         },
         "settings": [

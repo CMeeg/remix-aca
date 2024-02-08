@@ -66,40 +66,40 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   tags: tags
 }
 
-module monitoring './shared/monitoring.bicep' = {
-  name: 'monitoring'
+module logAnalyticsWorkspace './insights/log-analytics-workspace.bicep' = {
+  name: 'logAnalyticsWorkspace'
   scope: resourceGroup
   params: {
-    logAnalyticsName: buildProjectResourceName(abbrs.operationalInsightsWorkspaces, projectName, environmentName, resourceToken, true)
-    applicationInsightsName: buildProjectResourceName(abbrs.insightsComponents, projectName, environmentName, resourceToken, true)
+    name: buildProjectResourceName(abbrs.operationalInsightsWorkspaces, projectName, environmentName, resourceToken, true)
     location: location
     tags: tags
   }
 }
 
-module dashboard './shared/dashboard-web.bicep' = {
+module appInsights './insights/application-insights.bicep' = {
+  name: 'appInsights'
+  scope: resourceGroup
+  params: {
+    name: buildProjectResourceName(abbrs.insightsComponents, projectName, environmentName, resourceToken, true)
+    location: location
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+  }
+}
+
+module dashboard './insights/dashboard-web.bicep' = {
   name: 'dashboard'
   scope: resourceGroup
   params: {
     name: buildProjectResourceName(abbrs.portalDashboards, projectName, environmentName, resourceToken, true)
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
     location: location
     tags: tags
+    applicationInsightsName: appInsights.outputs.name
   }
 }
 
-module containerRegistry './shared/registry.bicep' = {
-  name: 'registry'
-  scope: resourceGroup
-  params: {
-    name: buildProjectResourceName(abbrs.containerRegistryRegistries, projectName, environmentName, resourceToken, false)
-    location: location
-    tags: tags
-  }
-}
-
-module keyVault './shared/keyvault.bicep' = {
-  name: 'keyvault'
+module keyVault './key-vault/key-vault.bicep' = {
+  name: 'keyVault'
   scope: resourceGroup
   params: {
     name: buildProjectResourceName(abbrs.keyVaultVaults, projectName, environmentName, resourceToken, true)
@@ -109,15 +109,26 @@ module keyVault './shared/keyvault.bicep' = {
   }
 }
 
-module containerAppEnvironment './shared/apps-env.bicep' = {
-  name: 'apps-env'
+module containerRegistry './containers/container-registry.bicep' = {
+  name: 'containerRegistry'
+  scope: resourceGroup
+  params: {
+    name: buildProjectResourceName(abbrs.containerRegistryRegistries, projectName, environmentName, resourceToken, false)
+    location: location
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+  }
+}
+
+module containerAppEnvironment './containers/container-app-environment.bicep' = {
+  name: 'containerAppEnvironment'
   scope: resourceGroup
   params: {
     name: buildProjectResourceName(abbrs.appManagedEnvironments, projectName, environmentName, resourceToken, true)
-    logAnalyticsWorkspaceName: monitoring.outputs.logAnalyticsWorkspaceName
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
     location: location
     tags: tags
+    logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
+    applicationInsightsName: appInsights.outputs.name
   }
 }
 
@@ -130,51 +141,66 @@ var webAppServiceHostName = !empty(webAppServiceCustomDomainName) ? webAppServic
 
 var webAppServiceUri = 'https://${webAppServiceHostName}'
 
+var webAppTargetPort = 3000
+
 var buildId = uniqueString(resourceGroup.id, deployment().name)
 
-module webApp './app/web-app.bicep' = {
+var nodeEnv = 'production'
+
+module webAppServiceIdentity './security/user-assigned-identity.bicep' = {
+  name: '${webAppServiceName}-identity'
+  scope: resourceGroup
+  params: {
+    name: buildServiceResourceName(abbrs.managedIdentityUserAssignedIdentities, projectName, webAppServiceName, environmentName, resourceToken, true)
+    location: location
+    tags: tags
+  }
+}
+
+module webApp './web-app.bicep' = {
   name: webAppServiceName
   scope: resourceGroup
   params: {
     name: webAppServiceContainerAppName
     location: location
     tags: union(tags, {'azd-service-name':  webAppServiceName })
-    identityName: buildServiceResourceName(abbrs.managedIdentityUserAssignedIdentities, projectName, webAppServiceName, environmentName, resourceToken, true)
-    containerAppsEnvironmentName: containerAppEnvironment.outputs.name
+    containerAppEnvironmentName: containerAppEnvironment.outputs.name
     containerRegistryName: containerRegistry.outputs.name
+    identityName: webAppServiceIdentity.outputs.name
     exists: webAppExists
-    appDefinition: union(webAppDefinition, {
-      env: [
-        {
-          name: 'APP_ENV'
-          value: environmentName
-        }
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: monitoring.outputs.applicationInsightsConnectionString
-        }
-        {
-          name: 'BASE_URL'
-          value: webAppServiceUri
-        }
-        {
-          name: 'BUILD_ID'
-          value: buildId
-        }
-        {
-          name: 'MIN_LOG_LEVEL'
-          value: stringOrDefault(envVars.MIN_LOG_LEVEL, '30')
-        }
-        {
-          name: 'NODE_ENV'
-          value: 'production'
-        }
-        {
-          name: 'PROJECT_NAME'
-          value: projectName
-        }
-      ]
-    })
+    appDefinition: webAppDefinition
+    customDomainName: webAppServiceCustomDomainName
+    env: [
+      {
+        name: 'APP_ENV'
+        value: envVars.APP_ENV
+      }
+      {
+        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+        value: appInsights.outputs.connectionString
+      }
+      {
+        name: 'BASE_URL'
+        value: webAppServiceUri
+      }
+      {
+        name: 'BUILD_ID'
+        value: buildId
+      }
+      {
+        name: 'MIN_LOG_LEVEL'
+        value: stringOrDefault(envVars.MIN_LOG_LEVEL, '30')
+      }
+      {
+        name: 'NODE_ENV'
+        value: nodeEnv
+      }
+      {
+        name: 'PORT'
+        value: '${webAppTargetPort}'
+      }
+    ]
+    targetPort: webAppTargetPort
   }
 }
 
@@ -195,4 +221,10 @@ output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.endpoint
 output AZURE_KEY_VAULT_NAME string = keyVault.outputs.name
 
 // Web app outputs
+// Include anything here that wouldn't already be present in the local .env file
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.connectionString
+output BASE_URL string = webAppServiceUri
+output BUILD_ID string = buildId
+output NODE_ENV string = nodeEnv
+output PORT int = webAppTargetPort
 output SERVICE_WEB_APP_ENDPOINTS string[] = [webAppServiceUri]
