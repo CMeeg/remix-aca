@@ -1,6 +1,13 @@
 node_modules
 
+/.azure
 /.cache
 /build
+/infra/env-vars.json
 
+.DS_Store
 .env
+.env.azure
+*.tsbuildinfo
+
+TODO.md

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "${PROJECT_NAME=remix-aca}"
+    },
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "webAppServiceName": {
+      "value": "${SERVICE_WEB_APP_NAME=web-app}"
+    },
+    "webAppExists": {
+      "value": "${SERVICE_WEB_APP_RESOURCE_EXISTS=false}"
+    },
+    "webAppDefinition": {
+      "value": {
+        "config": {
+          "certificateId": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_CERT_ID}",
+          "containerCpuCoreCount": "${SERVICE_WEB_APP_CONTAINER_CPU_CORE_COUNT}",
+          "containerMemory": "${SERVICE_WEB_APP_CONTAINER_MEMORY}",
+          "containerMinReplicas": "${SERVICE_WEB_APP_CONTAINER_MIN_REPLICAS}",
+          "containerMaxReplicas": "${SERVICE_WEB_APP_CONTAINER_MAX_REPLICAS}",
+          "customDomainName": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_NAME}"
+        },
+        "settings": [
+          {
+            "name": "",
+            "value": "${VAR}",
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR} to use the value of 'VAR' from the current environment."
+          },
+          {
+            "name": "",
+            "value": "${VAR_S}",
+            "secret": true,
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR_S} to use the value of 'VAR_S' from the current environment."
+          }
+        ]
+      }
+    }
+  }
+}

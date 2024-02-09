@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: remix-aca
+metadata:
+  template: remix-aca@0.1.0
+hooks:
+  preprovision:
+    shell: pwsh
+    run: ./.azd/hooks/preprovision.ps1
+  postprovision:
+    shell: pwsh
+    run: ./.azd/hooks/postprovision.ps1
+services:
+  web-app:
+    project: .
+    language: js
+    host: containerapp
+    dist: build
