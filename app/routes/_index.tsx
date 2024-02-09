@@ -1,10 +1,27 @@
 import type { MetaFunction } from "@remix-run/node"
+import { json } from "@remix-run/node"
+import { getCdnUrl } from "~/lib/url.server"
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" }
-  ]
+export async function loader() {
+  return json({
+    meta: [
+      { title: "New Remix App" },
+      { name: "description", content: "Welcome to Remix!" },
+      {
+        tagName: "link",
+        rel: "icon",
+        href: getCdnUrl("/favicon.ico")
+      }
+    ]
+  })
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return []
+  }
+
+  return data.meta
 }
 
 export default function Index() {
