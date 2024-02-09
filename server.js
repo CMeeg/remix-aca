@@ -4,6 +4,10 @@ import compression from "compression"
 import express from "express"
 import morgan from "morgan"
 
+if (process.env.NODE_ENV !== "production") {
+  await import("dotenv").then((dotenv) => dotenv.config())
+}
+
 installGlobals()
 
 const viteDevServer =
@@ -23,29 +27,49 @@ const remixHandler = createRequestHandler({
 
 const app = express()
 
-app.use(compression())
+// Rewrite paths that start with the build ID to remove the build ID (used for cache busting)
+const buildId = process.env.BUILD_ID
+if (buildId) {
+  app.get(`/${buildId}/*`, (req, res, next) => {
+    req.url = `/${req.params["0"]}`
+    next()
+  })
+}
+
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers["x-azure-ref"]) {
+        // Don't compress responses to requests from the CDN because it compresses them for us
+        return false
+      }
+
+      // Otherwsie use the default filter function
+      return compression.filter(req, res)
+    }
+  })
+)
 
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable("x-powered-by")
 
-// handle asset requests
+// Handle asset requests
 if (viteDevServer) {
   app.use(viteDevServer.middlewares)
 } else {
-  // Vite fingerprints its assets so we can cache forever.
+  // Vite fingerprints its assets so we can cache forever
   app.use(
     "/assets",
     express.static("build/client/assets", { immutable: true, maxAge: "1y" })
   )
 }
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
+// Everything else (like favicon.ico) is cached for an hour. You may want to be more aggressive with this caching
 app.use(express.static("build/client", { maxAge: "1h" }))
 
 app.use(morgan("tiny"))
 
-// handle SSR requests
+// Handle SSR requests
 app.all("*", remixHandler)
 
 const port = process.env.PORT || 3000

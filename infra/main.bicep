@@ -147,6 +147,18 @@ var buildId = uniqueString(resourceGroup.id, deployment().name)
 
 var nodeEnv = 'production'
 
+module webAppCdn './cdn/cdn.bicep' = {
+  name: '${webAppServiceName}-cdn'
+  scope: resourceGroup
+  params: {
+    profileName: buildServiceResourceName(abbrs.cdnProfiles, projectName, webAppServiceName, environmentName, resourceToken, true)
+    endpointName: buildServiceResourceName(abbrs.cdnProfilesEndpoints, projectName, webAppServiceName, environmentName, resourceToken, true)
+    location: location
+    tags: tags
+    originHostName: webAppServiceHostName
+  }
+}
+
 module webAppServiceIdentity './security/user-assigned-identity.bicep' = {
   name: '${webAppServiceName}-identity'
   scope: resourceGroup
@@ -188,6 +200,10 @@ module webApp './web-app.bicep' = {
         value: buildId
       }
       {
+        name: 'CDN_URL'
+        value: webAppCdn.outputs.endpointUri
+      }
+      {
         name: 'MIN_LOG_LEVEL'
         value: stringOrDefault(envVars.MIN_LOG_LEVEL, '30')
       }
@@ -225,6 +241,7 @@ output AZURE_KEY_VAULT_NAME string = keyVault.outputs.name
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.connectionString
 output BASE_URL string = webAppServiceUri
 output BUILD_ID string = buildId
+output CDN_URL string = webAppCdn.outputs.endpointUri
 output NODE_ENV string = nodeEnv
 output PORT int = webAppTargetPort
 output SERVICE_WEB_APP_ENDPOINTS string[] = [webAppServiceUri]
