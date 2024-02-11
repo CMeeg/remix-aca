@@ -1,5 +1,6 @@
-import helmet from "helmet"
 import crypto from "node:crypto"
+import helmet from "helmet"
+import cors from "cors"
 
 export function useSecurity(app) {
   const isProductionMode = process.env.NODE_ENV === "production"
@@ -52,4 +53,33 @@ export function useSecurity(app) {
 
     next()
   })
+
+  const allowList = []
+
+  if (baseUrl && !isLocalhost) {
+    allowList.push(baseUrl)
+  }
+
+  if (cdnUrl) {
+    allowList.push(cdnUrl)
+  }
+
+  if (allowList.length > 0) {
+    const corsOptions = {
+      origin: function (origin, callback) {
+        if (allowList.indexOf(origin) !== -1 || !origin) {
+          callback(null, true)
+        } else {
+          callback(new Error("Not allowed by CORS"))
+        }
+      },
+      // Some legacy browsers/devices choke on the default 204 status
+      optionsSuccessStatus: 200
+    }
+
+    app.use(cors(corsOptions))
+
+    // Pre-flight requests
+    app.options("*", cors(corsOptions))
+  }
 }

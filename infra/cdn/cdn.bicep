@@ -50,6 +50,8 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2022-11-01-preview' = {
     ]
     deliveryPolicy: {
       rules: [
+        // Add a rule to enable CORS
+        // https://learn.microsoft.com/en-us/azure/cdn/cdn-cors
         {
           name: 'CORSOrigin'
           order: 1
