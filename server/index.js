@@ -3,6 +3,7 @@ import { installGlobals } from "@remix-run/node"
 import express from "express"
 import { useRewrite } from "./rewrite.js"
 import { useCompression } from "./compression.js"
+import { useSecurity } from "./security.js"
 import { useLogging } from "./logging.js"
 
 const mode = process.env.NODE_ENV
@@ -23,11 +24,19 @@ const viteDevServer = isProductionMode
       })
     )
 
-const remixHandler = createRequestHandler({
-  build: viteDevServer
-    ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
-    : await import("../build/server/index.js")
-})
+const getRequestHandler = async () => {
+  const getLoadContext = (_, res) => {
+    return { cspNonce: res.locals.cspNonce }
+  }
+
+  return createRequestHandler({
+    build: viteDevServer
+      ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
+      : await import("../build/server/index.js"),
+    mode,
+    getLoadContext
+  })
+}
 
 const app = express()
 
@@ -35,8 +44,7 @@ useRewrite(app)
 
 useCompression(app)
 
-// http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
-app.disable("x-powered-by")
+useSecurity(app)
 
 // Handle asset requests
 if (viteDevServer) {
@@ -55,7 +63,7 @@ app.use(express.static("build/client", { maxAge: "1h" }))
 useLogging(app)
 
 // Handle SSR requests
-app.all("*", remixHandler)
+app.all("*", await getRequestHandler())
 
 const port = process.env.PORT ?? 3000
 app.listen(port, () =>
