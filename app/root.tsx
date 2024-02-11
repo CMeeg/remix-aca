@@ -5,8 +5,11 @@ import {
   Scripts,
   ScrollRestoration
 } from "@remix-run/react"
+import { useNonce } from "~/components/security/NonceContext"
 
 export default function App() {
+  const nonce = useNonce()
+
   return (
     <html lang="en">
       <head>
@@ -17,8 +20,8 @@ export default function App() {
       </head>
       <body>
         <Outlet />
-        <ScrollRestoration />
-        <Scripts />
+        <ScrollRestoration nonce={nonce} />
+        <Scripts nonce={nonce} />
       </body>
     </html>
   )
