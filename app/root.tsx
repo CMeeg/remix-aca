@@ -7,7 +7,16 @@ import {
   useRouteError,
   isRouteErrorResponse
 } from "@remix-run/react"
-import { useNonce } from "~/components/security/NonceContext"
+import { json } from "@remix-run/node"
+import { getClientEnv } from "~/lib/env.server"
+import { useNonce } from "~/components/NonceContext"
+import { AppInsightsClient } from "~/components/AppInsights/Client"
+
+export async function loader() {
+  return json({
+    env: getClientEnv()
+  })
+}
 
 export default function App() {
   const nonce = useNonce()
@@ -21,7 +30,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <AppInsightsClient>
+          <Outlet />
+        </AppInsightsClient>
         <ScrollRestoration nonce={nonce} />
         <Scripts nonce={nonce} />
       </body>
@@ -43,13 +54,16 @@ export function ErrorBoundary() {
         <Links />
       </head>
       <body>
-        <h1>
-          {isRouteErrorResponse(error)
-            ? `${error.status} ${error.statusText}`
-            : error instanceof Error
-              ? error.message
-              : "Unknown Error"}
-        </h1>
+        <AppInsightsClient>
+          <h1>
+            Error boundary says:{" "}
+            {isRouteErrorResponse(error)
+              ? `${error.status} ${error.statusText}`
+              : error instanceof Error
+                ? error.message
+                : "Unknown Error"}
+          </h1>
+        </AppInsightsClient>
         <Scripts nonce={nonce} />
       </body>
     </html>
