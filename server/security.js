@@ -13,6 +13,10 @@ export function useSecurity(app) {
   const cdnUrl = process.env.CDN_URL ?? ""
   const cdnHostname = cdnUrl ? new URL(cdnUrl).hostname : ""
 
+  const appInsightsHostname = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING
+    ? "https://*.applicationinsights.azure.com"
+    : ""
+
   const reportOnly = false
 
   const strictTransportSecurity = isProductionMode && !isLocalhost
@@ -28,7 +32,11 @@ export function useSecurity(app) {
         useDefaults: true,
         directives: {
           "default-src": ["'self'", cdnHostname],
-          "connect-src": ["'self'", isProductionMode ? "" : "ws:"],
+          "connect-src": [
+            "'self'",
+            isProductionMode ? "" : "ws:",
+            appInsightsHostname
+          ],
           "img-src": ["'self'", "data:", cdnHostname],
           "script-src": [
             "'self'",

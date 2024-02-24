@@ -4,6 +4,7 @@ import express from "express"
 import { useRewrite } from "./rewrite.js"
 import { useCompression } from "./compression.js"
 import { useSecurity } from "./security.js"
+import { initAppInsights } from "./app-insights.js"
 import { useLogging } from "./logging.js"
 
 const mode = process.env.NODE_ENV
@@ -40,11 +41,17 @@ const getRequestHandler = async () => {
 
 const app = express()
 
+const appInsights = initAppInsights()
+
+app.use(appInsights.logRequests)
+
 useRewrite(app)
 
 useCompression(app)
 
 useSecurity(app)
+
+useLogging(app)
 
 // Handle asset requests
 if (viteDevServer) {
@@ -60,10 +67,11 @@ if (viteDevServer) {
 // Everything else (like favicon.ico) is cached for an hour. You may want to be more aggressive with this caching
 app.use(express.static("build/client", { maxAge: "1h" }))
 
-useLogging(app)
-
 // Handle SSR requests
 app.all("*", await getRequestHandler())
+
+// Log errors to Application Insights
+app.use(appInsights.logErrors)
 
 const port = process.env.PORT ?? 3000
 app.listen(port, () =>

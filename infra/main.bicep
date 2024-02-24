@@ -205,7 +205,7 @@ module webApp './web-app.bicep' = {
       }
       {
         name: 'MIN_LOG_LEVEL'
-        value: stringOrDefault(envVars.MIN_LOG_LEVEL, '30')
+        value: stringOrDefault(envVars.MIN_LOG_LEVEL, 'info')
       }
       {
         name: 'NODE_ENV'

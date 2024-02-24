@@ -4,9 +4,13 @@ import { createReadableStreamFromReadable } from "@remix-run/node"
 import { RemixServer } from "@remix-run/react"
 import { isbot } from "isbot"
 import { renderToPipeableStream } from "react-dom/server"
-import { NonceContext } from "./components/security/NonceContext"
+import { parseProcessEnv, getClientEnv } from "~/lib/env.server"
+import { NonceContext } from "~/components/NonceContext"
 
 const ABORT_DELAY = 5_000
+
+parseProcessEnv()
+global.ENV = getClientEnv()
 
 function handleBotRequest(
   request: Request,
