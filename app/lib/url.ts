@@ -1,6 +1,4 @@
-const baseUrl = process.env.BASE_URL ?? "http://localhost:3000"
-const baseCdnUrl = process.env.CDN_URL ?? null
-const buildId = process.env.BUILD_ID ?? null
+import { getEnv } from "./env"
 
 const joinUrlSegments = (segments?: string[] | null) => {
   if (!segments || segments.length === 0) {
@@ -25,6 +23,9 @@ const joinUrlSegments = (segments?: string[] | null) => {
 }
 
 const getAbsoluteUrl = (path?: string) => {
+  const env = getEnv()
+  const baseUrl = env.BASE_URL
+
   if (!path) {
     return baseUrl
   }
@@ -33,6 +34,9 @@ const getAbsoluteUrl = (path?: string) => {
 }
 
 const getCdnUrl = (path?: string, includeFingerprint = true) => {
+  const env = getEnv()
+  const baseCdnUrl = env.CDN_URL
+
   if (!baseCdnUrl) {
     return path ?? ""
   }
@@ -40,6 +44,8 @@ const getCdnUrl = (path?: string, includeFingerprint = true) => {
   if (!path) {
     return baseCdnUrl
   }
+
+  const buildId = env.BUILD_ID
 
   if (includeFingerprint && buildId) {
     return joinUrlSegments([baseCdnUrl, buildId, path])

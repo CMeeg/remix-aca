@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import { generateSitemap } from "@nasa-gcn/remix-seo"
 import type { LoaderFunctionArgs, ServerBuild } from "@remix-run/node"
-import { getAbsoluteUrl } from "~/lib/url.server"
+import { getAbsoluteUrl } from "~/lib/url"
 
 // TODO: Hopefully this implementation can be simplified a little once some issues with Remix+Vite are resolved
 // https://github.com/nasa-gcn/remix-seo/issues/7

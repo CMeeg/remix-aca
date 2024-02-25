@@ -1,11 +1,6 @@
 import { z } from "zod"
-
-const environment = {
-  development: "development",
-  production: "production"
-} as const
-
-type Environment = keyof typeof environment
+import { environment } from "./env"
+import type { Environment } from "./env"
 
 const processEnvSchema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
@@ -74,8 +69,12 @@ const currentEnvironment = getCurrentEnvironment()
  */
 const getClientEnv = () => {
   return {
+    APP_ENV: currentEnvironment,
     APPLICATIONINSIGHTS_CONNECTION_STRING:
-      process.env.APPLICATIONINSIGHTS_CONNECTION_STRING
+      process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+    BASE_URL: process.env.BASE_URL,
+    BUILD_ID: process.env.BUILD_ID,
+    CDN_URL: process.env.CDN_URL
   }
 }
 
@@ -84,6 +83,9 @@ type ClientEnv = ReturnType<typeof getClientEnv>
 declare global {
   // eslint-disable-next-line no-var
   var ENV: ClientEnv
+  interface Window {
+    ENV: ClientEnv
+  }
 }
 
 export { parseProcessEnv, getClientEnv, environment, currentEnvironment }

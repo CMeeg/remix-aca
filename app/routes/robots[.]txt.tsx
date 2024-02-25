@@ -1,7 +1,7 @@
 import { generateRobotsTxt } from "@nasa-gcn/remix-seo"
 import type { RobotsConfig } from "@nasa-gcn/remix-seo/build/types"
 import { environment, currentEnvironment } from "~/lib/env.server"
-import { getAbsoluteUrl } from "~/lib/url.server"
+import { getAbsoluteUrl } from "~/lib/url"
 
 export function loader() {
   const config: RobotsConfig = {

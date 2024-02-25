@@ -1,4 +1,5 @@
 import {
+  useLoaderData,
   Links,
   Meta,
   Outlet,
@@ -7,10 +8,28 @@ import {
   useRouteError,
   isRouteErrorResponse
 } from "@remix-run/react"
+import type { LinksFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
+import { getCdnUrl } from "~/lib/url"
 import { getClientEnv } from "~/lib/env.server"
 import { useNonce } from "~/components/NonceContext"
 import { AppInsightsClient } from "~/components/AppInsights/Client"
+import { ClientEnvScript } from "~/components/ClientEnvScript"
+
+export const links: LinksFunction = () => {
+  const links: ReturnType<LinksFunction> = []
+
+  const cdnUrl = getCdnUrl("", false)
+
+  if (cdnUrl.length > 0) {
+    links.push({
+      rel: "preconnect",
+      href: cdnUrl
+    })
+  }
+
+  return links
+}
 
 export async function loader() {
   return json({
@@ -20,6 +39,8 @@ export async function loader() {
 
 export default function App() {
   const nonce = useNonce()
+
+  const data = useLoaderData<typeof loader>()
 
   return (
     <html lang="en">
@@ -33,6 +54,7 @@ export default function App() {
         <AppInsightsClient>
           <Outlet />
         </AppInsightsClient>
+        <ClientEnvScript nonce={nonce} env={data.env} />
         <ScrollRestoration nonce={nonce} />
         <Scripts nonce={nonce} />
       </body>
