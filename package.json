@@ -19,6 +19,7 @@
     "@0dep/pino-applicationinsights": "^0.1.2",
     "@microsoft/applicationinsights-react-js": "3.4.2",
     "@microsoft/applicationinsights-web": "2.8.17",
+    "@nasa-gcn/remix-seo": "^2.0.0",
     "@remix-run/express": "^2.7.2",
     "@remix-run/node": "^2.7.2",
     "@remix-run/react": "^2.7.2",
