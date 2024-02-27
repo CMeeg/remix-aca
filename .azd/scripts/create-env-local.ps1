@@ -25,6 +25,7 @@ if (Test-Path $outputPath -PathType Leaf) {
 $template = Get-Content -raw $templatePath | ConvertFrom-StringData
 
 # For each key in the template, check if there is a corresponding environment variable and if so, add it to an object
+# This is primarily of use in a CI/CD environment where the environment variables are set by the CI/CD system, but we only want to set the keys that also exist in the template
 
 $envVars = @{}
 

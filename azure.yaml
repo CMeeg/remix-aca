@@ -6,9 +6,11 @@ metadata:
 hooks:
   preprovision:
     shell: pwsh
+    interactive: true
     run: ./.azd/hooks/preprovision.ps1
   postprovision:
     shell: pwsh
+    interactive: true
     run: ./.azd/hooks/postprovision.ps1
 services:
   web-app:

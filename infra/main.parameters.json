@@ -15,7 +15,7 @@
       "value": "${AZURE_PRINCIPAL_ID}"
     },
     "webAppServiceName": {
-      "value": "${SERVICE_WEB_APP_NAME=web-app}"
+      "value": "web-app"
     },
     "webAppExists": {
       "value": "${SERVICE_WEB_APP_RESOURCE_EXISTS=false}"
@@ -31,6 +31,14 @@
           "customDomainName": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_NAME}"
         },
         "settings": [
+          {
+            "name": "APP_ENV",
+            "value": "${APP_ENV}"
+          },
+          {
+            "name": "MIN_LOG_LEVEL",
+            "value": "${MIN_LOG_LEVEL=info}"
+          },
           {
             "name": "",
             "value": "${VAR}",

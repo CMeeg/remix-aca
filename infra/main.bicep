@@ -39,9 +39,6 @@ var tags = {
 // See: https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations
 var abbrs = loadJsonContent('./abbreviations.json')
 
-// This file is created by an azd `preprovision` hook - if you're seeing an error here and elsewhere because this file doesn't exist, run `.azd/scripts/create-infra-env-vars.ps1` directly or via `azd provision` to create the file
-var envVars = loadJsonContent('./env-vars.json')
-
 // Generate a unique token to be used in naming resources
 var resourceToken = take(toLower(uniqueString(subscription().id, environmentName, location, projectName)), 4)
 
@@ -184,10 +181,6 @@ module webApp './web-app.bicep' = {
     customDomainName: webAppServiceCustomDomainName
     env: [
       {
-        name: 'APP_ENV'
-        value: envVars.APP_ENV
-      }
-      {
         name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
         value: appInsights.outputs.connectionString
       }
@@ -202,10 +195,6 @@ module webApp './web-app.bicep' = {
       {
         name: 'CDN_URL'
         value: webAppCdn.outputs.endpointUri
-      }
-      {
-        name: 'MIN_LOG_LEVEL'
-        value: stringOrDefault(envVars.MIN_LOG_LEVEL, 'info')
       }
       {
         name: 'NODE_ENV'
@@ -245,3 +234,4 @@ output CDN_URL string = webAppCdn.outputs.endpointUri
 output NODE_ENV string = nodeEnv
 output PORT int = webAppTargetPort
 output SERVICE_WEB_APP_ENDPOINTS string[] = [webAppServiceUri]
+output SERVICE_WEB_APP_FQDN string = webApp.outputs.fqdn

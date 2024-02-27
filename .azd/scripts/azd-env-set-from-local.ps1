@@ -32,7 +32,7 @@ function Read-EnvVars {
     $content.GetEnumerator() | Foreach-Object {
         $key, $value = $_.Name, $_.Value
 
-        if (($null -eq $value) -or ($value -eq "")) {
+        if (($null -eq $value) -or ($value.Trim() -eq "") -or ($value.Trim().StartsWith("#"))) {
             $envVars[$key] = ""
         } else {
             $value = Remove-Quotes -value $value -quoteChar '"'
@@ -52,8 +52,9 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $envPath = Join-Path $scriptDir "../../.env"
 $env = Read-EnvVars -path $envPath
 
-# Produce a `env-vars.json` file that can be used by the infra scripts
+# Loop through each key/value pair and set the corresponding environment variable using `azd env set` command
 
-$outputPath = Join-Path $scriptDir "../../infra/env-vars.json"
-
-$env | ConvertTo-Json | Out-File -FilePath $outputPath -Encoding utf8
+foreach ($key in $env.Keys) {
+    $value = $env[$key]
+    azd env set $key $value --no-prompt
+}
