@@ -205,8 +205,6 @@ Below are some instructions for how to setup and configure the pipelines include
 
 ### GitHub Actions
 
-TODO: Run through this process and check it for correctness
-
 You don't need to do anything specific to add the workflow in GitHub Actions, the presence of the `.github/workflows/azure-dev.yml` file is enough, but you will need to:
 
 1. [Create an Environment](#create-an-environment)
@@ -222,7 +220,7 @@ You don't need to do anything specific to add the workflow in GitHub Actions, th
    * Click `New environment`, name it `production`, and click `Configure environment`
    * Add protection rules if you wish, though it's not required
 
-> You can read more about creating environments in the [GitHub documentation](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment). Note that there are limitations with Environments in GitHub if you are using a Free acount and your repository is private.
+> You can read more about creating environments in the [GitHub documentation](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment). Note that there are limitations with Environments in GitHub if you are using a Free account and your repository is private.
 
 #### Setup permissions in Azure
 
@@ -252,15 +250,19 @@ You don't need to do anything specific to add the workflow in GitHub Actions, th
      * Click `Add` -> `Add role assignment`
      * Select `Privileged administrator roles` -> `Contributor`
      * Click `Next`
-     * Click `Select members` and select your Service principal
+     * On the `Members` tab, click `Select members`
+     * Search for and select the Service principal you created in the previous step
      * Click `Review + assign` and complete the Role assignment
    * Assign the `Role Based Access Control Administrator` role
      * Click `Add` -> `Add role assignment`
      * Select `Privileged administrator roles` -> `Role Based Access Control Administrator`
      * Click `Next`
-     * Click `Select members` and select your Service principal
+     * On the `Members` tab, click `Select members`
+     * Search for and select the Service principal you created in the previous step
      * Click `Next`
-     * Select `Constrain roles` and only allow assignment of the `AcrPull` role
+     * On the `Conditions` tab, click `Select roles and principals`
+     * Click `Configure` on `Constrain roles` and only allow assignment of the `AcrPull` role
+     * Click `Save` x 2
      * Click `Review + assign` and complete the Role assignment
 
 #### Add Environment variables
@@ -285,15 +287,22 @@ You don't need to do anything specific to add the workflow in GitHub Actions, th
 
 💡 If you add additional environment variables for use in your app and want to override them in this environment then you can come back here later to add or change anything as needed.
 
-TODO: Test the below - hopefully this isn't the case as it is an extra step that is a bit of a pain!
-
-> If you add environment variables to `.env.template` you must also make sure you edit the `Create .env file` step of the `deploy` job in `.github/workflows/azure-dev.yml` to make them available as environment variables when `npm run env:init` is executed in the pipeline.
+> If you add additional environment variables to use in your app (i.e. in `.env.local.template`) or infrastructure (i.e. in `main.parameters.json`) you must also make sure you add them to the `env` of the `deploy` job in `.github/workflows/azure-dev.yml` to make them available as environment variables when the steps are executed in the pipeline.
 >
 > GitHub Actions doesn't automatically make environment variables available to scripts so they need to be added explicitly to this step (this is something you don't need to do in the AZDO pipeline, which does expose its environment variables to scripts implicitly).
 
 #### Run the pipeline
 
-TODO: Write this
+The pipeline is designed to run automatically by pushing commits to the `main` branch.
+
+You can also run the pipeline manually:
+
+* Go to your [GitHub](https://github.com/) repo
+* Click on `Actions`
+* In the left sidebar, click on the `azure-dev.yml` workflow
+* Click `Run workflow`
+* Select the `main` branch
+* Click `Run workflow`
 
 ### Azure DevOps Pipelines
 
