@@ -133,8 +133,9 @@ module containerAppEnvironment './containers/container-app-environment.bicep' = 
 var webAppServiceContainerAppName = buildServiceResourceName(abbrs.appContainerApps, projectName, webAppServiceName, environmentName, resourceToken, true)
 
 var webAppServiceCustomDomainName = stringOrDefault(webAppConfig.infraSettings.customDomainName, '')
+var webAppServiceCustomDomainCertificateId = stringOrDefault(webAppConfig.infraSettings.customDomainCertificateId, '')
 
-var webAppServiceHostName = !empty(webAppServiceCustomDomainName) ? webAppServiceCustomDomainName : '${webAppServiceContainerAppName}.${containerAppEnvironment.outputs.defaultDomain}'
+var webAppServiceHostName = !empty(webAppServiceCustomDomainName) && !empty(webAppServiceCustomDomainCertificateId) ? webAppServiceCustomDomainName : '${webAppServiceContainerAppName}.${containerAppEnvironment.outputs.defaultDomain}'
 
 var webAppServiceUri = 'https://${webAppServiceHostName}'
 
@@ -179,6 +180,7 @@ module webApp './web-app.bicep' = {
     exists: webAppExists
     appConfig: webAppConfig
     customDomainName: webAppServiceCustomDomainName
+    customDomainCertificateId: webAppServiceCustomDomainCertificateId
     env: [
       {
         name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

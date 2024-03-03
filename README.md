@@ -297,8 +297,6 @@ TODO: Write this
 
 ### Azure DevOps Pipelines
 
-TODO: Run through this process and check it for correctness
-
 You need to manually create a pipeline in Azure DevOps - the presence of the `.azdo/pipelines/azure-dev.yml` file is not enough by itself - you will need to:
 
 1. [Create the Pipeline](#create-the-pipeline)
@@ -403,17 +401,15 @@ You can also run the pipeline manually:
 
 ## Adding a custom domain name
 
-TODO: Run through this process and check it for correctness
-
 Azure supports adding custom domain names with free managed SSL certificates to Container Apps. The Bicep scripts included in this template are setup to provide this capability, but before we can add a custom domain name and managed certificate Azure requires that DNS records be created to verify domain ownership.
 
 ### Verify domain ownership
 
-The verification process is described in steps 7 and 8 of the [Container Apps documentation](https://learn.microsoft.com/en-us/azure/container-apps/custom-domains-managed-certificates?pivots=azure-portal#add-a-custom-domain-and-managed-certificate), so please refer to that for specifics, but in summary you must add the following records via your DNS provider:
+Azure requires that you add the following DNS records:
 
 * A `TXT` record containing a domain verification code; and
-* An `A` record containing the static IP address of the Container Apps Environment; or
-* A `CNAME` record containing the FQDN of the Container App
+* If you are using an apex domain, an `A` record containing the static IP address of the Container Apps Environment; or
+* If you are using a subdomain, a `CNAME` record containing the FQDN of the Container App
 
 To get the information that you require for these DNS records you can:
 
@@ -422,9 +418,15 @@ To get the information that you require for these DNS records you can:
   * Check the output in your terminal
 * When running `azd` in a pipeline
   * Run the pipeline (if you have not already)
-  * Check the output of the `Provision infrastructure` task in the logs
+  * Check the output of the `Provision infrastructure` task in the pipeline run logs
 
-In the output you should find a line `[postprovision] === Container apps domain verification ===` and under that are the `Static IP`, `FQDN` and `Verification code` - use these values to set your DNS records as per the Container Apps documentation (linked above).
+In the output you should find a line `[postprovision] === Container apps domain verification ===` and under that are 3 values that you need to create the DNS records:
+
+* `Static IP`
+* `FQDN`
+* `Verification code`
+
+You can use these values to add the DNS records as described in steps 7 and 8 of the [Container Apps documentation](https://learn.microsoft.com/en-us/azure/container-apps/custom-domains-managed-certificates?pivots=azure-portal#add-a-custom-domain-and-managed-certificate).
 
 ### Set your custom domain name
 
@@ -436,14 +438,14 @@ To set your custom domain name on your Container App you will need to add (or up
 * In GitHub Actions: as an [Environment variable](#add-environment-variables) in the target Environment (e.g. `production`)
 * In Azure DevOps: as a [Variable in the Variable group](#create-a-variable-group-for-your-environment) for the target Environment (e.g. `production`)
 
-You will then need to:
+You will then need to provision your infrastructure to add the domain name to your container app:
 
 * When running `azd` locally
   * Run `azd provision`
 * When running `azd` in a pipeline
   * Run the pipeline
 
-💡 When you add a custom domain name a redirect rule is automatically added so that if you attempt to navigate to the default domain of the Container App there will be a permanent redirect to the custom domain name - this redirect is configured in `./server/redirect.js`. The [`getAbsoluteUrl`](#azure-cdn) function provided by this template will also use the custom domain name you have set rather than the default domain of the Container App.
+> Ideally we would add the domain name and SSL certificate at the same time and automate it through Bicep, but unfortunately Azure makes this difficult to do because it doesn't allow you to create a managed certificate for a domain name that hasn't been added to the Container App, but you can't add a domain name binding without an SSL certificate. So the method documented here adds the domain name without a binding first, which allows the managed certificate and binding to be created in the next step. Hopefully [issues with managed certificates](https://github.com/microsoft/azure-container-apps/issues/607) will be addressed in future to allow for automation of this process.
 
 ### Add a free managed certificate for your custom domain
 
@@ -484,11 +486,7 @@ And finally you will need to:
 
 ⚡ The custom domain and SSL certificate will now be bound to your Container App.
 
-> It is possible to automate the creation of managed certificates through Bicep, which would be preferable to the above manual process, but there are a few ["chicken and egg" issues](https://johnnyreilly.com/azure-container-apps-bicep-managed-certificates-custom-domains) that make automation difficult at the moment. In the context of this template it was decided that a manual solution is the most pragmatic solution.
->
-> The situation with managed certificates is discussed on this [GitHub issue](https://github.com/microsoft/azure-container-apps/issues/607) so hopefully there will be better support for automation in the future - one to keep an eye on!
->
-> If a manual approach is not scaleable for your needs then have a read through the links provided above for some ideas of how others have approached an automated solution.
+💡 A redirect rule is automatically added so that if you attempt to navigate to the default domain of the Container App there will be a permanent redirect to the custom domain name - this redirect is configured in `./server/redirect.js`. The [`getAbsoluteUrl`](#azure-cdn) function provided by this template will also use the custom domain name you have set rather than the default domain of the Container App.
 
 ## Application architecture
 

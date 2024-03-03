@@ -8,13 +8,13 @@ param exists bool
 @secure()
 param appConfig object
 param allowedOrigins array = []
-param certificateId string = ''
 param containerCpuCoreCount string = '0.5'
 param containerMaxReplicas int = 1
 param containerMemory string = '1.0Gi'
 param containerMinReplicas int = 0
 param containerName string = 'main'
 param customDomainName string = ''
+param customDomainCertificateId string = ''
 param env array = []
 param external bool = true
 param ingressEnabled bool = true
@@ -77,13 +77,13 @@ module containerApp './containers/container-app.bicep' = {
     containerRegistryName: containerRegistry.name
     userAssignedIdentityId: identity.id
     allowedOrigins: allowedOrigins
-    certificateId: empty(appConfig.infraSettings.certificateId) ? certificateId : appConfig.infraSettings.certificateId
     containerCpuCoreCount: empty(appConfig.infraSettings.containerCpuCoreCount) ? containerCpuCoreCount : appConfig.infraSettings.containerCpuCoreCount
     containerMaxReplicas: empty(appConfig.infraSettings.containerMaxReplicas) ? containerMaxReplicas : int(appConfig.infraSettings.containerMaxReplicas)
     containerMemory: empty(appConfig.infraSettings.containerMemory) ? containerMemory : appConfig.infraSettings.containerMemory
     containerMinReplicas: empty(appConfig.infraSettings.containerMinReplicas) ? containerMinReplicas : int(appConfig.infraSettings.containerMinReplicas)
     containerName: containerName
     customDomainName: empty(appConfig.infraSettings.customDomainName) ? customDomainName : appConfig.infraSettings.customDomainName
+    customDomainCertificateId: empty(appConfig.infraSettings.customDomainCertificateId) ? customDomainCertificateId : appConfig.infraSettings.customDomainCertificateId
     env: union(
       env,
       appEnv,
