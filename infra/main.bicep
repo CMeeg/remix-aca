@@ -24,7 +24,7 @@ param webAppServiceName string
 param webAppExists bool
 
 @secure()
-param webAppDefinition object
+param webAppConfig object
 
 // Tags that should be applied to all resources.
 //
@@ -40,7 +40,7 @@ var tags = {
 var abbrs = loadJsonContent('./abbreviations.json')
 
 // Generate a unique token to be used in naming resources
-var resourceToken = take(toLower(uniqueString(subscription().id, environmentName, location, projectName)), 4)
+var resourceToken = take(toLower(uniqueString(subscription().id, environmentName, location, projectName)), 5)
 
 // Functions for building resource names based on a naming convention
 // See: https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
@@ -132,7 +132,7 @@ module containerAppEnvironment './containers/container-app-environment.bicep' = 
 // We need to compute the origin hostname for the web app - if a custom domain name is used, then we can use that, otherwise we need to use the default container app hostname
 var webAppServiceContainerAppName = buildServiceResourceName(abbrs.appContainerApps, projectName, webAppServiceName, environmentName, resourceToken, true)
 
-var webAppServiceCustomDomainName = stringOrDefault(webAppDefinition.config.customDomainName, '')
+var webAppServiceCustomDomainName = stringOrDefault(webAppConfig.infraSettings.customDomainName, '')
 
 var webAppServiceHostName = !empty(webAppServiceCustomDomainName) ? webAppServiceCustomDomainName : '${webAppServiceContainerAppName}.${containerAppEnvironment.outputs.defaultDomain}'
 
@@ -177,7 +177,7 @@ module webApp './web-app.bicep' = {
     containerRegistryName: containerRegistry.outputs.name
     identityName: webAppServiceIdentity.outputs.name
     exists: webAppExists
-    appDefinition: webAppDefinition
+    appConfig: webAppConfig
     customDomainName: webAppServiceCustomDomainName
     env: [
       {

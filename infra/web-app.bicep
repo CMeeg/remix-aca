@@ -6,7 +6,7 @@ param containerRegistryName string
 param identityName string
 param exists bool
 @secure()
-param appDefinition object
+param appConfig object
 param allowedOrigins array = []
 param certificateId string = ''
 param containerCpuCoreCount string = '0.5'
@@ -24,7 +24,7 @@ param serviceBinds array = []
 param serviceType string = ''
 param targetPort int = 80
 
-var appSettings = filter(array(appDefinition.settings), i => i.name != '')
+var appSettings = filter(array(appConfig.appSettings), i => i.name != '')
 
 var appSecrets = map(filter(appSettings, i => i.?secret != null), i => {
   name: i.name
@@ -77,13 +77,13 @@ module containerApp './containers/container-app.bicep' = {
     containerRegistryName: containerRegistry.name
     userAssignedIdentityId: identity.id
     allowedOrigins: allowedOrigins
-    certificateId: empty(appDefinition.config.certificateId) ? certificateId : appDefinition.config.certificateId
-    containerCpuCoreCount: empty(appDefinition.config.containerCpuCoreCount) ? containerCpuCoreCount : appDefinition.config.containerCpuCoreCount
-    containerMaxReplicas: empty(appDefinition.config.containerMaxReplicas) ? containerMaxReplicas : int(appDefinition.config.containerMaxReplicas)
-    containerMemory: empty(appDefinition.config.containerMemory) ? containerMemory : appDefinition.config.containerMemory
-    containerMinReplicas: empty(appDefinition.config.containerMinReplicas) ? containerMinReplicas : int(appDefinition.config.containerMinReplicas)
+    certificateId: empty(appConfig.infraSettings.certificateId) ? certificateId : appConfig.infraSettings.certificateId
+    containerCpuCoreCount: empty(appConfig.infraSettings.containerCpuCoreCount) ? containerCpuCoreCount : appConfig.infraSettings.containerCpuCoreCount
+    containerMaxReplicas: empty(appConfig.infraSettings.containerMaxReplicas) ? containerMaxReplicas : int(appConfig.infraSettings.containerMaxReplicas)
+    containerMemory: empty(appConfig.infraSettings.containerMemory) ? containerMemory : appConfig.infraSettings.containerMemory
+    containerMinReplicas: empty(appConfig.infraSettings.containerMinReplicas) ? containerMinReplicas : int(appConfig.infraSettings.containerMinReplicas)
     containerName: containerName
-    customDomainName: empty(appDefinition.config.customDomainName) ? customDomainName : appDefinition.config.customDomainName
+    customDomainName: empty(appConfig.infraSettings.customDomainName) ? customDomainName : appConfig.infraSettings.customDomainName
     env: union(
       env,
       appEnv,

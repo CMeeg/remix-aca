@@ -20,9 +20,9 @@
     "webAppExists": {
       "value": "${SERVICE_WEB_APP_RESOURCE_EXISTS=false}"
     },
-    "webAppDefinition": {
+    "webAppConfig": {
       "value": {
-        "config": {
+        "infraSettings": {
           "certificateId": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_CERT_ID}",
           "containerCpuCoreCount": "${SERVICE_WEB_APP_CONTAINER_CPU_CORE_COUNT}",
           "containerMemory": "${SERVICE_WEB_APP_CONTAINER_MEMORY}",
@@ -30,7 +30,7 @@
           "containerMaxReplicas": "${SERVICE_WEB_APP_CONTAINER_MAX_REPLICAS}",
           "customDomainName": "${SERVICE_WEB_APP_CUSTOM_DOMAIN_NAME}"
         },
-        "settings": [
+        "appSettings": [
           {
             "name": "APP_ENV",
             "value": "${APP_ENV}"

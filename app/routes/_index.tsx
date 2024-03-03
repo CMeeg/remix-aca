@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import { getCdnUrl } from "~/lib/url.server"
+import { getCdnUrl } from "~/lib/url"
 
 export async function loader() {
   return json({

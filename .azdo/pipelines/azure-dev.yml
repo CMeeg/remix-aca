@@ -1,0 +1,74 @@
+# Run when commits are pushed to main branch
+trigger:
+  branches:
+    include:
+    - main
+
+# Azure Pipelines workflow to deploy to Azure using azd
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+# `APP_ENV` is used in deployment jobs to target the correct environment - this default value will get overridden below based on the source branch
+- name: APP_ENV
+  value: 'unknown'
+
+# The "production" environment is targeted when the source branch is `main`
+- ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - group: production
+  - name: APP_ENV
+    value: 'production'
+
+jobs:
+- job: init
+  steps:
+  - pwsh: |
+      Write-Output "`APP_ENV` is set to '$(APP_ENV)'"
+    displayName: 'Show target environment'
+
+- deployment: deploy
+  dependsOn: init
+  condition: ne(variables['APP_ENV'], 'unknown')
+  environment: $(APP_ENV)
+  # Use azd provided container image that has azd, infra, multi-language build tools pre-installed
+  container: mcr.microsoft.com/azure-dev-cli-apps:latest
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - checkout: self
+
+        - pwsh: |
+            npm run env:init
+          displayName: 'Create `.env` file'
+
+        - pwsh: |
+            azd config set auth.useAzCliAuth "true"
+          displayName: 'Configure AZD to Use AZ CLI Authentication'
+
+        - task: AzureCLI@2
+          displayName: 'Provision infrastructure'
+          inputs:
+            azureSubscription: azconnection
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              azd provision --no-prompt
+          env:
+            AZURE_ENV_NAME: $(AZURE_ENV_NAME)
+            AZURE_LOCATION: $(AZURE_LOCATION)
+            AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+
+        - task: AzureCLI@2
+          displayName: 'Deploy application'
+          inputs:
+            azureSubscription: azconnection
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              azd deploy --no-prompt
+          env:
+            AZURE_ENV_NAME: $(AZURE_ENV_NAME)
+            AZURE_LOCATION: $(AZURE_LOCATION)
+            AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
