@@ -10,7 +10,7 @@ export function useCompression(app) {
           return false
         }
 
-        // Otherwsie use the default filter function
+        // Otherwise use the default filter function
         return compression.filter(req, res)
       }
     })

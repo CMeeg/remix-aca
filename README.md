@@ -6,10 +6,9 @@ The Remix app included with the template has been generated with [`create-remix`
 
 * [Server-side and client-side instrumentation and logging via App Insights](#application-insights)
 * [Serving of Remix static assets through an Azure CDN (with cache busting)](#azure-cdn)
+* [A production-ready Express server setup](#express-server)
 * [Support for custom domain names and automatic canonical host name redirect](#adding-a-custom-domain-name)
 * [Support for checking the current environment at runtime](#checking-the-current-environment-at-runtime)
-
-TODO: Mention Express config (CSP etc)? Robots and Sitemap?
 
 Of course with this being an `azd` template you are free to build on top of the sample app, replace the sample app with your own, or cherry-pick what you want to keep or remove.
 
@@ -118,17 +117,44 @@ This template supports automated provisioning and deployment of your application
 * Please refer to the [Environment variables](#how-the-env-file-is-generated-when-running-in-a-pipeline) section of this document to read up on how environment variables are catered for inside CI/CD pipelines
 * Please refer to the [Pipelines](#pipelines) section of this document for information on how to setup a CI/CD pipeline on either of the supported platforms
 
+## Express server
+
+Express is used both in development and production builds and comes pre-configured with:
+
+* [Application Insights instrumentation](#server-side-instrumentation-and-components)
+* Redirect rules for:
+  * `http` -> `https`
+  * Canonical hostname for [custom domains](#adding-a-custom-domain-name)
+  * Removal of trailing slashes (to prevent duplication of content issues with search engines)
+* [Compression middleware](https://expressjs.com/en/resources/middleware/compression.html)
+* Security-focused HTTP response headers via [helmet](https://github.com/helmetjs/helmet)
+* Cache-control HTTP response headers for static assets
+* [A rewrite rule for cache-busting of static assets](#azure-cdn)
+
+The intent of the server configuration in this template is to provide a solid production-ready setup, but it can of course be used as a foundation and modified to suit your needs.
+
 ## Application Insights
 
 The template includes instrumentation and components to enable server-side and client-side instrumentation and logging via App Insights when deployed to Azure.
 
+If you need to test it in your development environment you can:
+
+* Run `azd provision` to create the application infrastructure (which includes an Application Insights instance) in Azure
+* Add the App Insights connection string to your local `.env` file
+* Run your local dev server and perform your development / testing as required
+* Run `azd down --purge` to delete the infrastructure resources in Azure when you're done
+
 ### Server-side instrumentation and components
 
-TODO: Write this section
+Server-side instrumentation is added via the [Express server](#express-server) and uses [Application Insights for Node.js](https://github.com/microsoft/ApplicationInsights-node.js). This will automatically track HTTP requests and responses, errors and exceptions, and provide live metrics. The implementation can be found in `server/app-insights.js`.
+
+A logging implementation is also included to allow you to send ad-hoc logging statements such as traces and errors from your server-side code to Application Insights. The logger uses [pino](https://github.com/pinojs/pino) with an [Application Insights transport](https://github.com/zerodep/pino-applicationinsights), and if no App Insights connection string is provided via environment variables (for example in your development environment) it will fallback to using the default `pino` transport or [pino-pretty](https://github.com/pinojs/pino-pretty) in the development build. The implementation can be found in `app/lib/logger.server.ts`.
 
 ### Client-side instrumentation and logging
 
-TODO: Write this section
+Client-side instrumentation is added via Remix's root route and uses [Microsoft Application Insights JavaScript SDK - React Plugin](https://github.com/microsoft/applicationinsights-react-js). This will automatically track route changes and client errors and exceptions. The implementation can be found in `app/components/AppInsights/Client.tsx`
+
+Hooks are also provided for ad-hoc logging of events, metrics and exceptions on from your React components. These use the React Context provided by the React Plugin and can be imported from `app/components/Appinsights/Context.tsx`.
 
 ## Azure CDN
 
