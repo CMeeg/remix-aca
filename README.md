@@ -38,9 +38,9 @@ azd provision
 azd deploy
 ```
 
-> The output from the `azd deploy` command includes a link to the Resource Group in your Azure Subscription where you can see the provisioned infrastructure resources. A link to the Remix app running in Azure is also included.
-
 🚀 You now have a Remix app running in Container Apps in Azure with a CDN for fast delivery of static files and Application Insights attached for monitoring!
+
+The output from the `azd deploy` command includes a link to the Resource Group in your Azure Subscription where you can see the provisioned infrastructure resources. A link to the Remix app running in Azure is also included.
 
 Then when you're finished with the deployment run:
 
@@ -49,7 +49,7 @@ Then when you're finished with the deployment run:
 azd down --purge
 ```
 
-💥 That will delete the Resource Group and all of the resources in it.
+💥 The app and all of its associated resources have now been removed from Azure.
 
 ## Setting up locally
 
@@ -154,19 +154,54 @@ A logging implementation is also included to allow you to send ad-hoc logging st
 
 Client-side instrumentation is added via Remix's root route and uses [Microsoft Application Insights JavaScript SDK - React Plugin](https://github.com/microsoft/applicationinsights-react-js). This will automatically track route changes and client errors and exceptions. The implementation can be found in `app/components/AppInsights/Client.tsx`
 
-Hooks are also provided for ad-hoc logging of events, metrics and exceptions on from your React components. These use the React Context provided by the React Plugin and can be imported from `app/components/Appinsights/Context.tsx`.
+Hooks are also provided for ad-hoc logging of events, metrics and exceptions on from your React components. These use the React Context provided by the React Plugin and can be found in `app/components/Appinsights/Context.tsx`.
 
 ## Azure CDN
 
-TODO: Write this section
+An [Azure CDN endpoint](https://learn.microsoft.com/en-us/azure/cdn/cdn-create-endpoint-how-to) is deployed and configured to work in "origin pull" mode, which means the first request made for a resource to the CDN will proxy through to the Container App (the origin) and the response will be cached on the CDN for subsequent requests.
 
-## Checking the current environment at runtime
+For this to work the static assets from the Remix build output including the `public` are included in the Docker image that is created during the `azd deploy` step and deployed to your Container App.
 
-TODO: Write this section
+To configure the CDN to be used for requests to Remix's static assets Vite's [`base`](https://vitejs.dev/config/shared-options.html#base) configuration option is set in `vite.config.ts`.
+
+This results in static build assets being requested through the CDN by default, but you can make requests through the CDN for other resources (such as those in the `public` folder). You can `import { getCdnUrl } from "~/lib/url"` and use the `getCdnUrl` function to generate a URL that will proxy the request through the CDN. E.g. `getCdnUrl("/favicon.ico")`.
+
+The template also includes a function that allows you to generate an absolute URL from a relative path if you require it (i.e. direct to the origin without proxying through the CDN). To use the function you can `import { getAbsoluteUrl } from "~/lib/url"`.
+
+As well as the configuration option set in `vite.config.ts`:
+
+* Compression is disabled in the [Express server](#express-server) for requests from the CDN because the CDN will provide compression
+* The `getCdnUrl` function will automatically add a "build id" to the path so that the cache can be busted for each build - the [Express server](#express-server) includes a rewrite rule to remove the "build id" from the path when handling requests
+* A [`preconnect`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preconnect) is added in the root route for the CDN
+
+> The features described above require the presence of the environment variables `BASE_URL`, `CDN_URL`and `BUILD_ID`. These are all provided to the app automatically when running `azd provision`.
+>
+> If these environment variables are not provided, for example when running in your development environment outside of `azd provision`, some or all of these features will not apply, but they have suitable fallback behaviour. For example, the `getCdnUrl` and `getAbsoluteUrl` functions will return the relative path that was provided as input to the function.
 
 ## Environment variables
 
-TODO: Write this section
+When developing your app you should use environment variables as per the [Remix documentation](https://remix.run/docs/en/main/guides/envvars):
+
+* Server environment variables
+  * Use a `.env` file for local development
+  * Let the host (Azure Container Apps in this case) take care of providing environment variables to the app in production
+* Browser environment variables
+  * Expose variables from the server to the client via your root `loader`
+
+The above approach has been implemented in this template (taking a huge amount of inspiration from the [Epic Stack](https://github.com/epicweb-dev/epic-stack)) and asks the following of you when adding a new environment variable:
+
+1. Keep the `.env.template` file updated to include additional environment variables as and when you add them to your `.env` file
+   * As well as being objectively a good practice anyway, the `.env.template` file is used by the [CI/CD pipelines](#how-the-env-file-is-generated-when-running-in-a-pipeline)
+   * Only add the keys and not the values to this file unless they are not sensitive/secret as it is intended to be comitted to your repo
+2. Add the new variable to the `processEnvSchema` in `app/lib/env.server.ts` so that you get type safety for `process.env` and so the app fails fast if a required variable is not set
+3. If you are going to also expose the variable to the browser edit the `getClientEnv` function in the same file so that it will be made accessible on the client via Remix's root route
+
+Environment variables can be accessed from server-side code using `process.env` as normal, and on the client there are two ways to access environment variables:
+
+* Inside a React component you can `import { useEnv } from "~/lib/env"`, which uses Remix's `useRouteLoaderData`
+* Outside of a React component, or where `useRouteLoaderData` is not available, you can `import { getEnv } from "~/lib/env"`, which uses the same loader data but sources it from `window.ENV`
+
+> 🙏 Thanks to the Epic Stack maintainers for providing a good example on how to handle environment variables in Remix, and for this [GitHub issue comment](https://github.com/remix-run/remix/discussions/8704#discussioncomment-8397380) for the `useRouteLoaderData` idea!
 
 ### How `azd` uses environment variables in this template
 
@@ -205,7 +240,33 @@ Exactly how the environment variables are surfaced to the build agent is slightl
    * These environment variables are named with the same keys used in the `.env.template` file
 3. The pipeline runs `npm run env:init`, which merges the contents of the `.env.template` file with the environment variables in the build agent context and outputs the result to a `.env` file
 
-⚡ `azd provision` and `azd deploy` then run as they would [locally](#how-azd-uses-environment-variables-in-this-template), using the `env` file created during the current pipeline run.
+⚡ `azd provision` and `azd deploy` then run as they would [locally](#how-azd-uses-environment-variables-in-this-template), using the `.env` file created during the current pipeline run.
+
+## Checking the current environment at runtime
+
+The template includes functions for checking the environment (set via [environment variables](#environment-variables)) that the application is currently running in. From a React component you can `import { environment, useEnv } from "~/lib/env"` and then add conditional logic where required, for example:
+
+```javascript
+import { useEnv } from "~/lib/env"
+
+const env = useEnv()
+
+if (env.APP_ENV === environment.production) {
+  // Do production stuff
+} else {
+  // Do non-production stuff
+}
+```
+
+If you want to check the current environment on the client, but outside of a React component you can `import { getEnv } from "~/lib/env"` and usage is the same as above.
+
+If you want to check the current environment on the server you can `import { currentEnvironment } from "~/lib/env.server"`.
+
+💡 If you want to change the environment names or add support for additional environments see the `getCurrentEnvironment` function in `app/lib/env.server.ts`.
+
+> `currentEnvironment` is set using an [environment variable](#environment-variables) `APP_ENV`. This is provided automatically by `azd provision` or can be set in your `.env` file when running locally.
+>
+> If the environment variable is not set for some reason the default value for `currentEnvironment` is `environment.development`.
 
 ## Pipelines
 
