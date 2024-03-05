@@ -586,15 +586,13 @@ And finally you will need to:
 
 ## Application architecture
 
-TODO: Create the diagram
-
 This template uses the following Azure resources:
 
 * [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview) to host the Remix app
 * [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net) for monitoring and logging
 * [Azure CDN](https://learn.microsoft.com/en-us/azure/cdn/cdn-overview) for efficient serving of static application assets
 
-Here's a high level architecture diagram that illustrates these components. Notice that these are all contained within a single [resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal) that will be created for you when you create the resources.
+Here's a high level architecture diagram that illustrates these components. Notice that these are all contained within a single [resource group](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal) that will be created for you when you create the resources via `azd`.
 
 !["Application architecture diagram"](docs/assets/remix-aca-architecture.png)
 
