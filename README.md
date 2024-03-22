@@ -31,16 +31,13 @@ npm run env:init
 # follow the prompts to sign in to your Azure account
 azd auth login
 
-# follow the prompts to provision the infrastructure resources in Azure
-azd provision
-
-# deploy the app to the provisioned infrastructure
-azd deploy
+# follow the prompts to provision the infrastructure resources in Azure and deploy your app
+azd up
 ```
 
 🚀 You now have a Remix app running in Container Apps in Azure with a CDN for fast delivery of static files and Application Insights attached for monitoring!
 
-The output from the `azd deploy` command includes a link to the Resource Group in your Azure Subscription where you can see the provisioned infrastructure resources. A link to the Remix app running in Azure is also included.
+The output from the `azd up` command includes a link to the Resource Group in your Azure Subscription where you can see the provisioned infrastructure resources. A link to the Remix app running in Azure is also included.
 
 Then when you're finished with the deployment run:
 
@@ -59,7 +56,7 @@ If you do not have access to or do not want to work in Codespaces or a Dev Conta
   * You can change this if you like, but this template currently targets Node 18
   * Use of [`nvm`](https://github.com/nvm-sh/nvm) or [`fnm`](https://github.com/Schniz/fnm) is recommended
 * [PowerShell](https://github.com/PowerShell/PowerShell)
-* [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd)
+* [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) v1.6.0 or later
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 > The template was developed on a Windows machine, and has been tested in a Linux environment (in the Dev Container). macOS is supported, but has not been tested.
@@ -96,11 +93,8 @@ azd auth login
 # create a `.env` file from the provided template (if you don't already have a `.env` file - this will be a no-op if you have)
 npm run env:init
 
-# follow the prompts to provision the infrastructure resources in Azure
-azd provision
-
-# deploy the app to the provisioned infrastructure
-azd deploy
+# follow the prompts to provision the infrastructure resources in Azure and deploy your app
+azd up
 ```
 
 Then when you're finished with the deployment run:
