@@ -1,8 +1,12 @@
 import type { MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
+import { Link } from "@remix-run/react"
 import { getCdnUrl } from "~/lib/url.server"
+import { logger } from "~/lib/logger.server"
 
 export async function loader() {
+  logger().info({ route: "index" }, "Hello from the index route!")
+
   return json({
     meta: [
       { title: "New Remix App" },
@@ -28,6 +32,7 @@ export default function Index() {
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
       <h1>Welcome to Remix</h1>
+      <Link to="/error">Error page</Link>
       <ul>
         <li>
           <a

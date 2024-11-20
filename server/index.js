@@ -1,19 +1,23 @@
-import { createRequestHandler } from "@remix-run/express"
+//import "./telemetry.js"
+import { initTelemetry } from "./telemetry.js"
 import { installGlobals } from "@remix-run/node"
+import { createRequestHandler } from "@remix-run/express"
 import express from "express"
 import { useRewrite } from "./rewrite.js"
 import { useCompression } from "./compression.js"
 import { useSecurity } from "./security.js"
-import { initAppInsights } from "./app-insights.js"
+//import { initAppInsights } from "./app-insights.js"
 import { useLogging } from "./logging.js"
 
 const mode = process.env.NODE_ENV
 const isProductionMode = mode === "production"
 
-if (!isProductionMode) {
+if (isProductionMode) {
   // Load .env file when not in production mode
   await import("dotenv").then((dotenv) => dotenv.config())
 }
+
+initTelemetry()
 
 installGlobals()
 
@@ -41,9 +45,9 @@ const getRequestHandler = async () => {
 
 const app = express()
 
-const appInsights = initAppInsights()
+// const appInsights = initAppInsights()
 
-app.use(appInsights.logRequests)
+// app.use(appInsights.logRequests)
 
 useRewrite(app)
 
@@ -71,7 +75,7 @@ app.use(express.static("build/client", { maxAge: "1h" }))
 app.all("*", await getRequestHandler())
 
 // Log errors to Application Insights
-app.use(appInsights.logErrors)
+//app.use(appInsights.logErrors)
 
 const port = process.env.PORT ?? 3000
 app.listen(port, () =>
