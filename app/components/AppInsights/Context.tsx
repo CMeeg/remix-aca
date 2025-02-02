@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from "react"
+import { useEffect, useState, type FC, type ReactNode } from "react"
 import { ApplicationInsights } from "@microsoft/applicationinsights-web"
 import type {
   IEventTelemetry,
@@ -60,7 +60,19 @@ const AppInsightsContextProvider: FC<AppInsightsContextProviderProps> = ({
   connectionString,
   children
 }) => {
-  const reactPlugin = loadAppInsights(connectionString)
+  const [reactPlugin, setReactPlugin] = useState<ReactPlugin | null>(null)
+
+  useEffect(() => {
+    if (!connectionString) {
+      return
+    }
+
+    setReactPlugin(loadAppInsights(connectionString))
+  }, [connectionString])
+
+  if (!reactPlugin) {
+    return children
+  }
 
   return (
     <AppInsightsContext.Provider value={reactPlugin}>
